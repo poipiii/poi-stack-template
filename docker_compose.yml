@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  poi_template_postgres:
+    image: postgres:alpine
+    #change the container name to a name that matches your project 
+    container_name: poi_template_postgres
+    ports:
+      -"5432":"5432"
+    environment:
+      #change the following env var to match the your project 
+      POSTGRES_DB : test_db
+      POSTGRES_USER : root
+      POSTGRES_PASSWORD : test_password
+    
+    volumes:
+      -postgres_data:/var/lib/postgres/
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+
+    poi_template_pgadmin:
+        image: dpage/pgadmin4:latest
+        container_name: poi_template_pgadmin
+        depends_on:
+            poi_template_postgres:
+              condition: service_healthy     
+        environment:
+            - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+            - PGADMIN_DEFAULT_PASSWORD=admin
+            - PGADMIN_LISTEN_PORT=5050
+        ports:
+            - "5050:5050"
+        volumes:
+            - ./utils/servers.json:/pgadmin4/servers.json
+            - ./utils/pgpass:/pgpass
+
+
+
+  
+# persist postgres data even after teardown of image
+volumes:
+  postgres_data:
